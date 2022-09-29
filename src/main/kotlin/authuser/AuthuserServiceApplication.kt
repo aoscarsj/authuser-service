@@ -7,6 +7,5 @@ import org.springframework.boot.runApplication
 class AuthuserServiceApplication
 
 fun main(args: Array<String>) {
-
     runApplication<AuthuserServiceApplication>(*args)
 }
