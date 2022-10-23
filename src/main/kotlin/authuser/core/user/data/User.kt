@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
 import java.io.Serializable
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
 import javax.persistence.*
 
@@ -14,32 +15,32 @@ import javax.persistence.*
 class User(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private var userId: UUID,
+    var userId: UUID? = null,
     @Column(unique = true, length = 50, nullable = false)
-    private val username: String,
+    val username: String = "",
     @Column(unique = true, length = 50, nullable = false)
-    private val email: String,
+    val email: String = "",
     @Column(nullable = false)
     @JsonIgnore
-    private val password: String,
+    var password: String = "",
     @Column(length = 150, nullable = false)
-    private val fullName: String,
+    val fullName: String = "",
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private val userStatus: UserStatus,
+    val userStatus: UserStatus = UserStatus.ACTIVE,
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private val userType: UserType,
+    val userType: UserType = UserType.STUDENT,
     @Column(length = 20)
-    private val phoneNumber: String,
+    val phoneNumber: String = "",
     @Column(length = 20)
-    private val cpf: String,
-    private val imageUrl: String,
+    val cpf: String = "",
+    val imageUrl: String = "",
     @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
-    private val created: LocalDateTime = LocalDateTime.now(),
+    val created: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
-    private val updated: LocalDateTime? = null
+    val updated: LocalDateTime? = null
 ) : Serializable {
     companion object {
         private const val serialVersionUID: Long = 1L
