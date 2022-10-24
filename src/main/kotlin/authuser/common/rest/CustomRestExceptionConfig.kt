@@ -24,6 +24,7 @@ class CustomRestExceptionConfig(
         val restResponse = RestResponse<Any>(
             success = false,
             message = "Internal Server Error",
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
             httpCode = 500
         )
 
@@ -54,6 +55,7 @@ class CustomRestExceptionConfig(
         val restResponse = RestResponse<Any>(
             success = false,
             message = restException.message,
+            httpStatus = restException.httpStatus,
             httpCode = restException.httpCode,
             errors = mappedErrors
         )
