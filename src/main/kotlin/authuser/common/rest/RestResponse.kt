@@ -1,9 +1,12 @@
 package authuser.common.rest
 
+import org.springframework.http.HttpStatus
+
 data class RestResponse<T>(
     val message: String,
     val response: T? = null,
     val success: Boolean = true,
-    val httpCode: Int = 200,
+    val httpStatus: HttpStatus = HttpStatus.OK,
+    val httpCode: Int = httpStatus.value(),
     val errors: Collection<RestItemError> = emptyList()
 )
