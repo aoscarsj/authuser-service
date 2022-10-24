@@ -45,11 +45,13 @@ class User(
     companion object {
         private const val serialVersionUID: Long = 1L
 
-        fun from(userRequest: UserRequest): User{
+        fun from(request: UserRequest): User {
 
-            val user = User() // TODO implement this method
-
-            return user
+            return User(
+                username = request.username, password = request.password, imageUrl =
+                request.imageUrl, cpf = request.cpf, phoneNumber = request.phoneNumber, fullName =
+                request.fullName, email = request.email
+            )
         }
     }
 }
