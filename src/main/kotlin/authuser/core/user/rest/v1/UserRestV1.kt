@@ -1,10 +1,12 @@
 package authuser.core.user.rest.v1
 
+import authuser.common.rest.RestException
+import authuser.common.rest.RestResponse
 import authuser.core.user.data.User
+import authuser.core.user.data.UserRequest
 import authuser.core.user.service.UserService
-import org.springframework.http.HttpStatus.NOT_FOUND
-import org.springframework.http.HttpStatus.OK
-import org.springframework.http.ResponseEntity
+import com.fasterxml.jackson.annotation.JsonView
+import org.springframework.http.HttpStatus.*
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -16,28 +18,40 @@ class UserRestV1(
 ) {
 
     @GetMapping
-    fun findAll(): ResponseEntity<List<User>> {
-        return ResponseEntity.status(OK).body(userService.findAll())
-    }
+    fun findAll(): RestResponse<List<User>> = RestResponse(
+        "Users was collected", userService
+            .findAll(), httpCode = OK.value()
+    )
 
     @GetMapping("/{userId}")
-    fun find(@PathVariable(value = "userId")userId: UUID): ResponseEntity<User?> {
+    fun find(@PathVariable(value = "userId") userId: UUID): RestResponse<User?> {
 
         val user = userService.findById(userId)
 
-        if(user != null)
-            return ResponseEntity.status(OK).body(user)
-
-        return ResponseEntity.status(NOT_FOUND).body(user)
+        return RestResponse(
+            message = "user was collected",
+            response = user,
+            httpCode = OK.value()
+        )
     }
 
-    @DeleteMapping
-    fun remove(@PathVariable(value = "userId") userId: UUID): ResponseEntity<Any> {
+    @DeleteMapping("/{userId}")
+    fun remove(@PathVariable(value = "userId") userId: UUID): RestResponse<Any> {
 
-        val user = userService.findById(userId)
-            ?: return ResponseEntity.status(NOT_FOUND).body("User not found")
-        userService.delete(user)
+        userService.delete(userId)
 
-        return ResponseEntity.status(OK).body("User deleted successful")
+        return RestResponse("User deleted successful", httpCode = OK.value())
+    }
+
+    @PutMapping("/{userId}")
+    fun update(
+        @PathVariable(value = "userId") userId: UUID, @JsonView(
+            UserRequest.UserView.Companion.UserPut::class
+        ) request: UserRequest
+    ): RestResponse<Any> {
+
+        userService.update(userId, request)
+
+        return RestResponse("User was updated successful")
     }
 }

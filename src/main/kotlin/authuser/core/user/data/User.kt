@@ -44,6 +44,13 @@ class User(
 ) : Serializable {
     companion object {
         private const val serialVersionUID: Long = 1L
+
+        fun from(userRequest: UserRequest): User{
+
+            val user = User() // TODO implement this method
+
+            return user
+        }
     }
 }
 

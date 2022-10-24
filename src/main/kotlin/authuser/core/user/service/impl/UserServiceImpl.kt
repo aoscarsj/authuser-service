@@ -2,10 +2,13 @@ package authuser.core.user.service.impl
 
 import authuser.common.rest.RestException
 import authuser.core.user.data.User
+import authuser.core.user.data.UserRequest
+import authuser.core.user.exception.UserException
 import authuser.core.user.repository.UserRepository
 import authuser.core.user.service.UserService
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus.CONFLICT
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import java.util.*
@@ -19,12 +22,27 @@ class UserServiceImpl(
 
     override fun findAll(): List<User> = userRepository.findAll()
 
-    override fun findById(userId: UUID): User? = userRepository.findByIdOrNull(userId)
+    override fun findById(userId: UUID): User {
 
-    override fun delete(user: User) = userRepository.delete(user)
+        return userRepository.findByIdOrNull(userId) ?: throw UserException(
+            "User not found",
+            NOT_FOUND
+        )
+    }
+
+    override fun delete(userId: UUID) = userRepository.delete(findById(userId))
 
     override fun existsByUsername(user: User): Boolean =
         userRepository.existsByUsername(user.username)
+
+    override fun update(userId: UUID, userRequest: UserRequest): User {
+
+        val user = findById(userId)
+
+        println(userRequest)
+
+        return user
+    }
 
     override fun signup(user: User): User {
 
