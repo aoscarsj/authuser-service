@@ -1,9 +1,8 @@
 package authuser.core.user.rest.v1
 
-import authuser.common.rest.RestException
 import authuser.common.rest.RestResponse
 import authuser.core.user.data.User
-import authuser.core.user.data.UserRequest
+import authuser.core.user.data.UpdateUserRequest
 import authuser.core.user.service.UserService
 import com.fasterxml.jackson.annotation.JsonView
 import org.springframework.http.HttpStatus.*
@@ -40,18 +39,30 @@ class UserRestV1(
 
         userService.delete(userId)
 
-        return RestResponse("User deleted successful", httpCode = OK.value())
+        return RestResponse("User deleted successful")
     }
 
     @PutMapping("/{userId}")
     fun update(
-        @PathVariable(value = "userId") userId: UUID, @JsonView(
-            UserRequest.UserView.Companion.UserPut::class
-        ) request: UserRequest
+        @PathVariable(value = "userId") userId: UUID, @RequestBody @JsonView(
+            UpdateUserRequest.UserView.Companion.UserPut::class
+        ) request: UpdateUserRequest
     ): RestResponse<Any> {
 
-        userService.update(userId, request)
+        val user = userService.update(userId, request)
 
-        return RestResponse("User was updated successful")
+        return RestResponse("User was updated successful", response = user)
+    }
+
+    @PutMapping("/{userId}/password")
+    fun updatePassword(
+        @PathVariable(value = "userId") userId: UUID, @RequestBody @JsonView(
+            UpdateUserRequest.UserView.Companion.PasswordPut::class
+        ) request: UpdateUserRequest
+    ): RestResponse<Any> {
+
+        userService.updatePassword(userId, request)
+
+        return RestResponse("Password was updated successful")
     }
 }

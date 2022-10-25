@@ -19,12 +19,12 @@ class User(
     @Column(unique = true, length = 50, nullable = false)
     val username: String = "",
     @Column(unique = true, length = 50, nullable = false)
-    val email: String = "",
+    var email: String = "",
     @Column(nullable = false)
     @JsonIgnore
     var password: String = "",
     @Column(length = 150, nullable = false)
-    val fullName: String = "",
+    var fullName: String = "",
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     val userStatus: UserStatus = UserStatus.ACTIVE,
@@ -32,9 +32,9 @@ class User(
     @Enumerated(EnumType.STRING)
     val userType: UserType = UserType.STUDENT,
     @Column(length = 20)
-    val phoneNumber: String = "",
+    var phoneNumber: String = "",
     @Column(length = 20)
-    val cpf: String = "",
+    var cpf: String = "",
     val imageUrl: String = "",
     @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
@@ -45,12 +45,16 @@ class User(
     companion object {
         private const val serialVersionUID: Long = 1L
 
-        fun from(request: UserRequest): User {
+        fun from(request: CreateUserRequest): User {
 
             return User(
-                username = request.username, password = request.password, imageUrl =
-                request.imageUrl, cpf = request.cpf, phoneNumber = request.phoneNumber, fullName =
-                request.fullName, email = request.email
+                username = request.username,
+                password = request.password,
+                cpf = request.cpf,
+                phoneNumber = request.phoneNumber,
+                fullName =
+                request.fullName,
+                email = request.email
             )
         }
     }
