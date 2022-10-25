@@ -35,7 +35,7 @@ class User(
     var phoneNumber: String = "",
     @Column(length = 20)
     var cpf: String = "",
-    val imageUrl: String = "",
+    var imageUrl: String = "",
     @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
     val created: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),

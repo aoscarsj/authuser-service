@@ -56,17 +56,36 @@ class UserServiceImpl(
 
     override fun updatePassword(userId: UUID, updateRequest: UpdateUserRequest) {
 
-        if(updateRequest.oldPassword.isNullOrEmpty() || updateRequest.password.isNullOrEmpty())
-            throw PasswordException("Password cannot be null or empty.", BAD_REQUEST)
-        if(updateRequest.password.length < 8)
-            throw PasswordException("Password cannot be less than 8 digits.", BAD_REQUEST)
+        val user = findById(userId)
+        validatePassword(user, updateRequest)
+
+        user.password = passwordEncoder.encode(updateRequest.password)
+        userRepository.save(user)
+    }
+
+    override fun updateImage(userId: UUID, updateRequest: UpdateUserRequest): User {
 
         val user = findById(userId)
 
-        if(passwordEncoder.matches(updateRequest.oldPassword, user.password).not())
-            throw PasswordException("Incorrect password.", BAD_REQUEST)
+        if(updateRequest.imageUrl.isNullOrEmpty())
+            throw UserException("ImageUrl cannot be null or empty", BAD_REQUEST)
 
-        user.password = passwordEncoder.encode(updateRequest.password)
+        user.imageUrl = updateRequest.imageUrl
+        userRepository.save(user)
+
+        return user
+    }
+
+    private fun validatePassword(user: User, updateRequest: UpdateUserRequest) {
+
+        updateRequest.apply {
+            if(oldPassword.isNullOrEmpty() || password.isNullOrEmpty())
+                throw PasswordException("Password cannot be null or empty.", BAD_REQUEST)
+            if(password.length < 8)
+                throw PasswordException("Password cannot be less than 8 digits.", BAD_REQUEST)
+            if(passwordEncoder.matches(oldPassword, user.password).not())
+                throw PasswordException("Error: Mismatched old password.", CONFLICT)
+        }
     }
 
 

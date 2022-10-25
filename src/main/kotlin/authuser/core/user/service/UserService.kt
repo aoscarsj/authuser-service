@@ -13,4 +13,5 @@ interface UserService {
     fun existsByUsername(user: User): Boolean
     fun update(userId: UUID, updateRequest: UpdateUserRequest): User
     fun updatePassword(userId: UUID, updateRequest: UpdateUserRequest)
+    fun updateImage(userId: UUID, updateRequest: UpdateUserRequest): User
 }

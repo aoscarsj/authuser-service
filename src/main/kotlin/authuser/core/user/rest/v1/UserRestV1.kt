@@ -63,6 +63,18 @@ class UserRestV1(
 
         userService.updatePassword(userId, request)
 
-        return RestResponse("Password was updated successful")
+        return RestResponse("Password updated successfully.")
+    }
+
+    @PutMapping("/{userId}/image")
+    fun updateImage(
+        @PathVariable(value = "userId") userId: UUID, @RequestBody @JsonView(
+            UpdateUserRequest.UserView.Companion.ImagePut::class
+        ) request: UpdateUserRequest
+    ): RestResponse<Any> {
+
+        val user = userService.updateImage(userId, request)
+
+        return RestResponse("Image updated successfully.", response = user)
     }
 }
