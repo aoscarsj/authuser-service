@@ -1,10 +1,11 @@
 package authuser.core.auth.rest.v1
 
 import authuser.common.rest.RestResponse
+import authuser.core.user.data.CreateUserRequest
 import authuser.core.user.data.User
-import authuser.core.user.data.UserRequest
 import authuser.core.user.service.UserService
 import com.fasterxml.jackson.annotation.JsonView
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -16,14 +17,14 @@ class AuthenticationRestV1(
 
     @PostMapping("/signup")
     fun registerUser(
-        @RequestBody @JsonView(UserRequest.UserView.Companion.RegistrationPost::class)
-        userRequest: UserRequest
+        @RequestBody @JsonView(CreateUserRequest.UserView.Companion.RegistrationPost::class)
+        userRequest: CreateUserRequest
     ): RestResponse<User> {
         val user = User.from(userRequest)
         val createdUser = userService.signup(user)
         return RestResponse(
             message = "User was successfully created", response = createdUser,
-            httpCode = 201
+            httpStatus = HttpStatus.CREATED
         )
     }
 }
