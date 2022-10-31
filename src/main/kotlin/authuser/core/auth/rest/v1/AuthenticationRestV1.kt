@@ -7,9 +7,7 @@ import authuser.core.user.data.User
 import authuser.core.user.service.UserService
 import com.fasterxml.jackson.annotation.JsonView
 import org.springframework.http.HttpStatus
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
-import javax.validation.Valid
 
 @RestController
 @CrossOrigin(origins = ["*"], maxAge = 3600)
@@ -20,11 +18,11 @@ class AuthenticationRestV1(
 
     @PostMapping("/signup")
     fun registerUser(
-        @RequestBody @Validated(RegistrationPost::class) @Valid @JsonView(RegistrationPost::class)
-        userRequest: CreateUserRequest
+        @RequestBody @JsonView(RegistrationPost::class) userRequest: CreateUserRequest
     ): RestResponse<User> {
-        val user = User.from(userRequest)
-        val createdUser = userService.signup(user)
+
+        val createdUser = userService.signup(userRequest)
+
         return RestResponse(
             message = "User was successfully created", response = createdUser,
             httpStatus = HttpStatus.CREATED
