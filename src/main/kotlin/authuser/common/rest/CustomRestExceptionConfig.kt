@@ -47,9 +47,9 @@ class CustomRestExceptionConfig(
             val error = environment.getProperty("code.${applicationName}.${it.code}")
 
             if (error != null && error.isNotEmpty())
-                mappedErrors.add(RestItemError("${applicationPrefix}${it.code}", error))
+                mappedErrors.add(RestItemError("${applicationPrefix}:${it.code}", error))
             else
-                mappedErrors.add(RestItemError("${applicationPrefix}${it.code}", it.error))
+                mappedErrors.add(RestItemError("${applicationPrefix}:${it.code}", it.error))
         }
 
         val restResponse = RestResponse<Any>(
