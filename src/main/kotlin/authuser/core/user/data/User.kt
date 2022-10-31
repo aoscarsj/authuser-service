@@ -1,5 +1,7 @@
 package authuser.core.user.data
 
+import authuser.common.extension.isCPF
+import authuser.common.extension.isEmail
 import authuser.common.rest.RestItemError
 import authuser.core.user.exception.RegistrationUserException
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -68,8 +70,6 @@ class User(
 
             val errors: MutableList<RestItemError> = mutableListOf()
             val errorCode = "REGISTRATION_USER"
-            val emailRegex = "/^[a-z0-9.]+@[a-z0-9]+\\.[a-z]+\\.([a-z]+)?\$/i\n".toRegex()
-            val cpfRegex = "[0-9]{3}\\.?[0-9]{3}\\.?[0-9]{3}\\-?[0-9]{2}\n".toRegex()
 
             val usernameSizeInvalidMessage = "Username must be between 4 and 30 characters"
             val usernameContainsSpaceMessage = "Username cannot have a space"
@@ -83,11 +83,11 @@ class User(
                     errors.add(RestItemError(usernameSizeInvalidMessage, "${errorCode}_001"))
                 if (username.contains(" "))
                     errors.add(RestItemError(usernameContainsSpaceMessage, "${errorCode}_002"))
-                if (email.contains(emailRegex).not())
+                if (email.isEmail().not())
                     errors.add(RestItemError(emailInvalidMessage, "${errorCode}_003"))
                 if (password.length < 8 || password.length > 25)
                     RestItemError(passwordSizeInvalidMessage, "${errorCode}_004")
-                if (cpf.contains(cpfRegex).not())
+                if (cpf.isCPF().not())
                     RestItemError(cpfInvalidMessage, "${errorCode}_005")
             }
 

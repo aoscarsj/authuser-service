@@ -1,10 +1,14 @@
 package authuser.core.user.service.impl
 
+import authuser.common.extension.isCPF
+import authuser.common.extension.isEmail
 import authuser.common.rest.RestException
+import authuser.common.rest.RestItemError
 import authuser.core.user.data.CreateUserRequest
-import authuser.core.user.data.User
 import authuser.core.user.data.UpdateUserRequest
+import authuser.core.user.data.User
 import authuser.core.user.exception.PasswordException
+import authuser.core.user.exception.RegistrationUserException
 import authuser.core.user.exception.UserException
 import authuser.core.user.repository.UserRepository
 import authuser.core.user.service.UserService
@@ -38,7 +42,10 @@ class UserServiceImpl(
 
     override fun update(userId: UUID, updateRequest: UpdateUserRequest): User {
 
+        validateRequest(updateRequest)
+
         val user = findById(userId)
+
         updateRequest.apply {
 
             if (!email.isNullOrEmpty())
@@ -55,6 +62,33 @@ class UserServiceImpl(
         return user
     }
 
+    private fun validateRequest(request: UpdateUserRequest) {
+
+        val errors: MutableList<RestItemError> = mutableListOf()
+        val errorCode = "UPDATE_USER"
+
+        request.apply {
+
+            email?.let {
+
+                if(!email.isEmail())
+                    errors.add(RestItemError("Email is not valid", code = "${errorCode}_E01"))
+                if(userRepository.existsByEmail(email))
+                    errors.add(RestItemError("email already registered", code = "${errorCode}_E02"))
+            }
+
+            cpf?.let {
+                if(!cpf.isCPF())
+                    errors.add(RestItemError("CPF is not valid", code = "${errorCode}_C01"))
+                if(userRepository.existsByCpf(cpf))
+                    errors.add(RestItemError("cpf already registered", code = "${errorCode}_E02"))
+            }
+        }
+
+        if(errors.isNotEmpty())
+            throw RegistrationUserException("The request is not valid", CONFLICT, errors)
+    }
+
     override fun updatePassword(userId: UUID, updateRequest: UpdateUserRequest) {
 
         val user = findById(userId)
@@ -62,6 +96,18 @@ class UserServiceImpl(
 
         user.password = passwordEncoder.encode(updateRequest.password)
         userRepository.save(user)
+    }
+
+    private fun validatePassword(user: User, updateRequest: UpdateUserRequest) {
+
+        updateRequest.apply {
+            if (oldPassword.isNullOrEmpty() || password.isNullOrEmpty())
+                throw PasswordException("Password cannot be null or empty.", BAD_REQUEST)
+            if (password.length < 8 || password.length > 25)
+                throw PasswordException("Password must be between 8 and 25 digits.", BAD_REQUEST)
+            if (passwordEncoder.matches(oldPassword, user.password).not())
+                throw PasswordException("Error: Mismatched old password.", CONFLICT)
+        }
     }
 
     override fun updateImage(userId: UUID, updateRequest: UpdateUserRequest): User {
@@ -77,17 +123,7 @@ class UserServiceImpl(
         return user
     }
 
-    private fun validatePassword(user: User, updateRequest: UpdateUserRequest) {
 
-        updateRequest.apply {
-            if (oldPassword.isNullOrEmpty() || password.isNullOrEmpty())
-                throw PasswordException("Password cannot be null or empty.", BAD_REQUEST)
-            if (password.length < 8)
-                throw PasswordException("Password cannot be less than 8 digits.", BAD_REQUEST)
-            if (passwordEncoder.matches(oldPassword, user.password).not())
-                throw PasswordException("Error: Mismatched old password.", CONFLICT)
-        }
-    }
 
 
     override fun signup(request: CreateUserRequest): User {

@@ -8,7 +8,6 @@ import authuser.core.user.data.UpdateUserRequest.UserView.Companion.UserPut
 import authuser.core.user.data.User
 import authuser.core.user.service.UserService
 import com.fasterxml.jackson.annotation.JsonView
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -41,8 +40,7 @@ class UserRestV1(
     @PutMapping("/{userId}")
     fun update(
         @PathVariable(value = "userId") userId: UUID,
-        @RequestBody @Validated(UserPut::class)
-        @JsonView(UserPut::class) request: UpdateUserRequest
+        @RequestBody @JsonView(UserPut::class) request: UpdateUserRequest
     ): RestResponse<Any> {
 
         val user = userService.update(userId, request)
@@ -52,8 +50,7 @@ class UserRestV1(
     @PutMapping("/{userId}/password")
     fun updatePassword(
         @PathVariable(value = "userId") userId: UUID,
-        @RequestBody @Validated(PasswordPut::class)
-        @JsonView(PasswordPut::class) request: UpdateUserRequest
+        @RequestBody @JsonView(PasswordPut::class) request: UpdateUserRequest
     ): RestResponse<Any> {
 
         userService.updatePassword(userId, request)
@@ -63,8 +60,7 @@ class UserRestV1(
     @PutMapping("/{userId}/image")
     fun updateImage(
         @PathVariable(value = "userId") userId: UUID,
-        @RequestBody @Validated(ImagePut::class)
-        @JsonView(ImagePut::class) request: UpdateUserRequest
+        @RequestBody @JsonView(ImagePut::class) request: UpdateUserRequest
     ): RestResponse<Any> {
 
         val user = userService.updateImage(userId, request)
