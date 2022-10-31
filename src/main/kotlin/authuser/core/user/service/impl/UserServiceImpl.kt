@@ -1,6 +1,7 @@
 package authuser.core.user.service.impl
 
 import authuser.common.rest.RestException
+import authuser.core.user.data.CreateUserRequest
 import authuser.core.user.data.User
 import authuser.core.user.data.UpdateUserRequest
 import authuser.core.user.exception.PasswordException
@@ -67,7 +68,7 @@ class UserServiceImpl(
 
         val user = findById(userId)
 
-        if(updateRequest.imageUrl.isNullOrEmpty())
+        if (updateRequest.imageUrl.isNullOrEmpty())
             throw UserException("ImageUrl cannot be null or empty", BAD_REQUEST)
 
         user.imageUrl = updateRequest.imageUrl
@@ -79,18 +80,19 @@ class UserServiceImpl(
     private fun validatePassword(user: User, updateRequest: UpdateUserRequest) {
 
         updateRequest.apply {
-            if(oldPassword.isNullOrEmpty() || password.isNullOrEmpty())
+            if (oldPassword.isNullOrEmpty() || password.isNullOrEmpty())
                 throw PasswordException("Password cannot be null or empty.", BAD_REQUEST)
-            if(password.length < 8)
+            if (password.length < 8)
                 throw PasswordException("Password cannot be less than 8 digits.", BAD_REQUEST)
-            if(passwordEncoder.matches(oldPassword, user.password).not())
+            if (passwordEncoder.matches(oldPassword, user.password).not())
                 throw PasswordException("Error: Mismatched old password.", CONFLICT)
         }
     }
 
 
-    override fun signup(user: User): User {
+    override fun signup(request: CreateUserRequest): User {
 
+        val user = User.from(request)
         validate(user)
 
         user.password = passwordEncoder.encode(user.password)
@@ -105,7 +107,8 @@ class UserServiceImpl(
         if (existsByUsername(user))
             throw RestException(
                 message = "Error: Username is Already taken!",
-                httpStatus = CONFLICT,
+                httpStatus =
+                CONFLICT,
             )
         if (userRepository.existsByEmail(user.email))
             throw RestException(message = "Error: Email is Already taken!", httpStatus = CONFLICT)
