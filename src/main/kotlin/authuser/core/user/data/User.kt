@@ -2,6 +2,7 @@ package authuser.core.user.data
 
 import authuser.common.extension.isCPF
 import authuser.common.extension.isEmail
+import authuser.common.extension.isUsername
 import authuser.common.rest.RestItemError
 import authuser.core.user.exception.RegistrationUserException
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -61,7 +62,7 @@ class User(
                     cpf = cpf,
                     phoneNumber = phoneNumber,
                     fullName = fullName,
-                    email = email
+                    email = email,
                 )
             }
         }
@@ -72,7 +73,7 @@ class User(
             val errorCode = "REGISTRATION_USER"
 
             val usernameSizeInvalidMessage = "Username must be between 4 and 30 characters"
-            val usernameContainsSpaceMessage = "Username cannot have a space"
+            val usernameContainsSpaceMessage = "The username is not valid"
             val emailInvalidMessage = "The email is not valid"
             val passwordSizeInvalidMessage = "Password must be between 8 and 25 characters"
             val cpfInvalidMessage = "The CPF is not valid"
@@ -81,18 +82,22 @@ class User(
 
                 if (username.length < 4 || username.length > 30)
                     errors.add(RestItemError(usernameSizeInvalidMessage, "${errorCode}_001"))
-                if (username.contains(" "))
+                if (username.isUsername())
                     errors.add(RestItemError(usernameContainsSpaceMessage, "${errorCode}_002"))
                 if (email.isEmail().not())
                     errors.add(RestItemError(emailInvalidMessage, "${errorCode}_003"))
                 if (password.length < 8 || password.length > 25)
-                    RestItemError(passwordSizeInvalidMessage, "${errorCode}_004")
+                    errors.add(RestItemError(passwordSizeInvalidMessage, "${errorCode}_004"))
                 if (cpf.isCPF().not())
-                    RestItemError(cpfInvalidMessage, "${errorCode}_005")
+                    errors.add(RestItemError(cpfInvalidMessage, "${errorCode}_005"))
             }
 
-            if(errors.isNotEmpty())
-                throw RegistrationUserException("The request is not valid", HttpStatus.CONFLICT, errors)
+            if (errors.isNotEmpty())
+                throw RegistrationUserException(
+                    "The request is not valid",
+                    HttpStatus.CONFLICT,
+                    errors
+                )
         }
     }
 }

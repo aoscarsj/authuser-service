@@ -23,3 +23,6 @@ fun String.isEmail(): Boolean {
 
 fun String.isCPF(): Boolean =
     Pattern.compile(REGEX_CPF_VALIDATION).matcher(this).matches()
+
+fun String.isUsername(): Boolean =
+    (isNullOrEmpty() || this[0].isLetter() || contains(' ')).not()

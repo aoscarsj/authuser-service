@@ -11,12 +11,11 @@ data class UpdateUserRequest(
     val email: String? = null,
 
     @JsonView(UserView.Companion.PasswordPut::class)
-    @Size(min = 8, max = 20)
+    @Size(min = 8, max = 25, groups = [UserView.Companion.PasswordPut::class])
     val password: String? = null,
 
-
     @JsonView(UserView.Companion.PasswordPut::class)
-    @Size(min = 8, max = 20)
+    @Size(min = 8, max = 25, groups = [UserView.Companion.PasswordPut::class])
     val oldPassword: String? = null,
 
     @JsonView(UserView.Companion.UserPut::class)
