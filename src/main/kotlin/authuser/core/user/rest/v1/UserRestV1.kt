@@ -8,6 +8,10 @@ import authuser.core.user.data.UpdateUserRequest.UserView.Companion.UserPut
 import authuser.core.user.data.User
 import authuser.core.user.service.UserService
 import com.fasterxml.jackson.annotation.JsonView
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort.Direction.ASC
+import org.springframework.data.web.PageableDefault
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -19,9 +23,10 @@ class UserRestV1(
 ) {
 
     @GetMapping
-    fun findAll(): RestResponse<List<User>> = RestResponse(
-        "Users was collected", userService.findAll()
-    )
+    fun findAll(
+        @PageableDefault(page = 0, size = 10, sort = ["userId"], direction = ASC) page: Pageable
+    ): RestResponse<Page<User>> =
+        RestResponse("Users was collected", userService.findAll(page))
 
     @GetMapping("/{userId}")
     fun find(@PathVariable(value = "userId") userId: UUID): RestResponse<User?> {

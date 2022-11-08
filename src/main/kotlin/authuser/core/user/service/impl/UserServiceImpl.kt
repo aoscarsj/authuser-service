@@ -12,6 +12,8 @@ import authuser.core.user.exception.RegistrationUserException
 import authuser.core.user.exception.UserException
 import authuser.core.user.repository.UserRepository
 import authuser.core.user.service.UserService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus.*
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -25,7 +27,7 @@ class UserServiceImpl(
 
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
 
-    override fun findAll(): List<User> = userRepository.findAll()
+    override fun findAll(page: Pageable): Page<User> = userRepository.findAll(page)
 
     override fun findById(userId: UUID): User {
 
