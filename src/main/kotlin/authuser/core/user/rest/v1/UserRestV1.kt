@@ -1,10 +1,11 @@
 package authuser.core.user.rest.v1
 
 import authuser.common.rest.RestResponse
-import authuser.core.user.data.UpdateUserRequest
-import authuser.core.user.data.UpdateUserRequest.UserView.Companion.ImagePut
-import authuser.core.user.data.UpdateUserRequest.UserView.Companion.PasswordPut
-import authuser.core.user.data.UpdateUserRequest.UserView.Companion.UserPut
+import authuser.core.user.data.UserSearchRequest
+import authuser.core.user.data.UserUpdateRequest
+import authuser.core.user.data.UserUpdateRequest.UserView.Companion.ImagePut
+import authuser.core.user.data.UserUpdateRequest.UserView.Companion.PasswordPut
+import authuser.core.user.data.UserUpdateRequest.UserView.Companion.UserPut
 import authuser.core.user.data.User
 import authuser.core.user.service.UserService
 import com.fasterxml.jackson.annotation.JsonView
@@ -24,9 +25,10 @@ class UserRestV1(
 
     @GetMapping
     fun findAll(
+        searchRequest: UserSearchRequest,
         @PageableDefault(page = 0, size = 10, sort = ["userId"], direction = ASC) page: Pageable
     ): RestResponse<Page<User>> =
-        RestResponse("Users was collected", userService.findAll(page))
+        RestResponse("Users was collected", userService.findAll(searchRequest, page))
 
     @GetMapping("/{userId}")
     fun find(@PathVariable(value = "userId") userId: UUID): RestResponse<User?> {
@@ -45,7 +47,7 @@ class UserRestV1(
     @PutMapping("/{userId}")
     fun update(
         @PathVariable(value = "userId") userId: UUID,
-        @RequestBody @JsonView(UserPut::class) request: UpdateUserRequest
+        @RequestBody @JsonView(UserPut::class) request: UserUpdateRequest
     ): RestResponse<Any> {
 
         val user = userService.update(userId, request)
@@ -55,7 +57,7 @@ class UserRestV1(
     @PutMapping("/{userId}/password")
     fun updatePassword(
         @PathVariable(value = "userId") userId: UUID,
-        @RequestBody @JsonView(PasswordPut::class) request: UpdateUserRequest
+        @RequestBody @JsonView(PasswordPut::class) request: UserUpdateRequest
     ): RestResponse<Any> {
 
         userService.updatePassword(userId, request)
@@ -65,7 +67,7 @@ class UserRestV1(
     @PutMapping("/{userId}/image")
     fun updateImage(
         @PathVariable(value = "userId") userId: UUID,
-        @RequestBody @JsonView(ImagePut::class) request: UpdateUserRequest
+        @RequestBody @JsonView(ImagePut::class) request: UserUpdateRequest
     ): RestResponse<Any> {
 
         val user = userService.updateImage(userId, request)

@@ -1,8 +1,8 @@
 package authuser.core.auth.rest.v1
 
 import authuser.common.rest.RestResponse
-import authuser.core.user.data.CreateUserRequest
-import authuser.core.user.data.CreateUserRequest.UserView.Companion.RegistrationPost
+import authuser.core.user.data.UserCreateRequest
+import authuser.core.user.data.UserCreateRequest.UserView.Companion.RegistrationPost
 import authuser.core.user.data.User
 import authuser.core.user.service.UserService
 import com.fasterxml.jackson.annotation.JsonView
@@ -18,7 +18,7 @@ class AuthenticationRestV1(
 
     @PostMapping("/signup")
     fun registerUser(
-        @RequestBody @JsonView(RegistrationPost::class) userRequest: CreateUserRequest
+        @RequestBody @JsonView(RegistrationPost::class) userRequest: UserCreateRequest
     ): RestResponse<User> {
 
         val createdUser = userService.signup(userRequest)

@@ -33,10 +33,10 @@ class User(
     var fullName: String = "",
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    val userStatus: UserStatus = UserStatus.ACTIVE,
+    val status: UserStatus = UserStatus.ACTIVE,
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    val userType: UserType = UserType.STUDENT,
+    val type: UserType = UserType.STUDENT,
     @Column(length = 20)
     var phoneNumber: String = "",
     @Column(length = 20)
@@ -51,7 +51,7 @@ class User(
     companion object {
         private const val serialVersionUID: Long = 1L
 
-        fun from(request: CreateUserRequest): User {
+        fun from(request: UserCreateRequest): User {
 
             validRequest(request)
             request.apply {
@@ -67,7 +67,7 @@ class User(
             }
         }
 
-        private fun validRequest(request: CreateUserRequest) {
+        private fun validRequest(request: UserCreateRequest) {
 
             val errors: MutableList<RestItemError> = mutableListOf()
             val errorCode = "REGISTRATION_USER"

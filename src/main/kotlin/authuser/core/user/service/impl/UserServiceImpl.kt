@@ -4,9 +4,10 @@ import authuser.common.extension.isCPF
 import authuser.common.extension.isEmail
 import authuser.common.rest.RestException
 import authuser.common.rest.RestItemError
-import authuser.core.user.data.CreateUserRequest
-import authuser.core.user.data.UpdateUserRequest
 import authuser.core.user.data.User
+import authuser.core.user.data.UserCreateRequest
+import authuser.core.user.data.UserSearchRequest
+import authuser.core.user.data.UserUpdateRequest
 import authuser.core.user.exception.PasswordException
 import authuser.core.user.exception.RegistrationUserException
 import authuser.core.user.exception.UserException
@@ -27,7 +28,31 @@ class UserServiceImpl(
 
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
 
-    override fun findAll(page: Pageable): Page<User> = userRepository.findAll(page)
+    override fun findAll(searchRequest: UserSearchRequest, page: Pageable): Page<User> {
+
+        searchRequest.apply {
+
+            if (email != null && status != null && type != null)
+                return userRepository.findAllByTypeAndStatusAndEmailContains(
+                    type, status, email, page
+                )
+            if (status != null && type != null)
+                return userRepository.findAllByTypeAndStatus(type, status, page)
+            if (status != null && email != null)
+                return userRepository.findAllByStatusAndEmailContains(status, email, page)
+            if (type != null && email != null)
+                return userRepository.findAllByTypeAndEmailContains(type, email, page)
+            if (status != null)
+                return userRepository.findAllByStatus(status, page)
+            if (type != null)
+                return userRepository.findAllByType(type, page)
+            if (email != null)
+                return userRepository.findAllByEmailContains(email, page)
+        }
+
+        return userRepository.findAll(page)
+    }
+
 
     override fun findById(userId: UUID): User {
 
@@ -42,7 +67,7 @@ class UserServiceImpl(
     override fun existsByUsername(user: User): Boolean =
         userRepository.existsByUsername(user.username)
 
-    override fun update(userId: UUID, updateRequest: UpdateUserRequest): User {
+    override fun update(userId: UUID, updateRequest: UserUpdateRequest): User {
 
         validateRequest(updateRequest)
 
@@ -64,7 +89,7 @@ class UserServiceImpl(
         return user
     }
 
-    private fun validateRequest(request: UpdateUserRequest) {
+    private fun validateRequest(request: UserUpdateRequest) {
 
         val errors: MutableList<RestItemError> = mutableListOf()
         val errorCode = "UPDATE_USER"
@@ -73,25 +98,25 @@ class UserServiceImpl(
 
             email?.let {
 
-                if(!email.isEmail())
+                if (!email.isEmail())
                     errors.add(RestItemError("Email is not valid", code = "${errorCode}_E01"))
-                if(userRepository.existsByEmail(email))
+                if (userRepository.existsByEmail(email))
                     errors.add(RestItemError("email already registered", code = "${errorCode}_E02"))
             }
 
             cpf?.let {
-                if(!cpf.isCPF())
+                if (!cpf.isCPF())
                     errors.add(RestItemError("CPF is not valid", code = "${errorCode}_C01"))
-                if(userRepository.existsByCpf(cpf))
+                if (userRepository.existsByCpf(cpf))
                     errors.add(RestItemError("cpf already registered", code = "${errorCode}_E02"))
             }
         }
 
-        if(errors.isNotEmpty())
+        if (errors.isNotEmpty())
             throw RegistrationUserException("The request is not valid", CONFLICT, errors)
     }
 
-    override fun updatePassword(userId: UUID, updateRequest: UpdateUserRequest) {
+    override fun updatePassword(userId: UUID, updateRequest: UserUpdateRequest) {
 
         val user = findById(userId)
         validatePassword(user, updateRequest)
@@ -100,7 +125,7 @@ class UserServiceImpl(
         userRepository.save(user)
     }
 
-    private fun validatePassword(user: User, updateRequest: UpdateUserRequest) {
+    private fun validatePassword(user: User, updateRequest: UserUpdateRequest) {
 
         updateRequest.apply {
             if (oldPassword.isNullOrEmpty() || password.isNullOrEmpty())
@@ -112,7 +137,7 @@ class UserServiceImpl(
         }
     }
 
-    override fun updateImage(userId: UUID, updateRequest: UpdateUserRequest): User {
+    override fun updateImage(userId: UUID, updateRequest: UserUpdateRequest): User {
 
         val user = findById(userId)
 
@@ -126,9 +151,7 @@ class UserServiceImpl(
     }
 
 
-
-
-    override fun signup(request: CreateUserRequest): User {
+    override fun signup(request: UserCreateRequest): User {
 
         val user = User.from(request)
         validate(user)

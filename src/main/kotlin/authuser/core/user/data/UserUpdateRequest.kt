@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonView
 import javax.validation.constraints.Size
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class UpdateUserRequest(
+data class UserUpdateRequest(
 
     @JsonView(UserView.Companion.UserPut::class)
     val email: String? = null,
