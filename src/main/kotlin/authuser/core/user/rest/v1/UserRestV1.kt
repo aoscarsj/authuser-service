@@ -1,20 +1,20 @@
 package authuser.core.user.rest.v1
 
 import authuser.common.rest.RestResponse
+import authuser.core.user.data.User
 import authuser.core.user.data.UserSearchRequest
 import authuser.core.user.data.UserUpdateRequest
 import authuser.core.user.data.UserUpdateRequest.UserView.Companion.ImagePut
 import authuser.core.user.data.UserUpdateRequest.UserView.Companion.PasswordPut
 import authuser.core.user.data.UserUpdateRequest.UserView.Companion.UserPut
-import authuser.core.user.data.User
 import authuser.core.user.service.UserService
 import com.fasterxml.jackson.annotation.JsonView
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort.Direction.ASC
 import org.springframework.data.web.PageableDefault
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
-import org.springframework.hateoas.server.mvc.linkTo
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -33,13 +33,17 @@ class UserRestV1(
 
         val users = userService.findAll(searchRequest, page)
 
-        if(users.isEmpty.not())
-            users.forEach { user ->
-                user.add(linkTo(methodOn(User)).withSelfRel())
+        if (users.isEmpty.not()) {
+            for (user in users.toList()) {
+                user.add(
+                    linkTo(methodOn(UserRestV1::class.javaObjectType).find(user.userId!!)).withSelfRel()
+                )
             }
+        }
 
         return RestResponse("Users was collected", users)
     }
+
     @GetMapping("/{userId}")
     fun find(@PathVariable(value = "userId") userId: UUID): RestResponse<User?> {
 

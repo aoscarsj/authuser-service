@@ -2,7 +2,7 @@ package authuser.common.rest
 
 import org.springframework.http.HttpStatus
 
-data class RestResponse<T>(
+open class RestResponse<T>(
     val message: String,
     val response: T? = null,
     val success: Boolean = true,
