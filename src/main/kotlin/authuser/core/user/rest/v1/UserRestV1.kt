@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort.Direction.ASC
 import org.springframework.data.web.PageableDefault
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
+import org.springframework.hateoas.server.mvc.linkTo
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -27,9 +29,17 @@ class UserRestV1(
     fun findAll(
         searchRequest: UserSearchRequest,
         @PageableDefault(page = 0, size = 10, sort = ["userId"], direction = ASC) page: Pageable
-    ): RestResponse<Page<User>> =
-        RestResponse("Users was collected", userService.findAll(searchRequest, page))
+    ): RestResponse<Page<User>> {
 
+        val users = userService.findAll(searchRequest, page)
+
+        if(users.isEmpty.not())
+            users.forEach { user ->
+                user.add(linkTo(methodOn(User)).withSelfRel())
+            }
+
+        return RestResponse("Users was collected", users)
+    }
     @GetMapping("/{userId}")
     fun find(@PathVariable(value = "userId") userId: UUID): RestResponse<User?> {
 
