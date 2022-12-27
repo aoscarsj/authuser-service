@@ -2,6 +2,7 @@ package authuser.core.user.service.impl
 
 import authuser.common.extension.isCPF
 import authuser.common.extension.isEmail
+import authuser.common.extension.isUsername
 import authuser.common.rest.RestException
 import authuser.common.rest.RestItemError
 import authuser.core.user.data.User
@@ -9,8 +10,8 @@ import authuser.core.user.data.UserCreateRequest
 import authuser.core.user.data.UserSearchRequest
 import authuser.core.user.data.UserUpdateRequest
 import authuser.core.user.exception.PasswordException
-import authuser.core.user.exception.RegistrationUserException
 import authuser.core.user.exception.UserException
+import authuser.core.user.exception.UserRegistrationException
 import authuser.core.user.repository.UserRepository
 import authuser.core.user.service.UserService
 import org.springframework.data.domain.Page
@@ -113,7 +114,7 @@ class UserServiceImpl(
         }
 
         if (errors.isNotEmpty())
-            throw RegistrationUserException("The request is not valid", CONFLICT, errors)
+            throw UserRegistrationException("The request is not valid", CONFLICT, errors)
     }
 
     override fun updatePassword(userId: UUID, updateRequest: UserUpdateRequest) {
@@ -153,8 +154,10 @@ class UserServiceImpl(
 
     override fun signup(request: UserCreateRequest): User {
 
+        validateSignupRequest(request)
         val user = User.from(request)
-        validate(user)
+
+        validateUserInformation(user)
 
         user.password = passwordEncoder.encode(user.password)
         userRepository.save(user)
@@ -162,14 +165,48 @@ class UserServiceImpl(
         return user
     }
 
+    private fun validateSignupRequest(request: UserCreateRequest) {
 
-    private fun validate(user: User): Boolean {
+        val errors: MutableList<RestItemError> = mutableListOf()
+        val errorCode = "REGISTRATION_USER"
+        val (minUsernameSize, maxUsernameSize) = Pair(4, 30)
+        val (minPasswordSize, maxPasswordSize) = Pair(8, 25)
+
+        val usernameSizeInvalidMessage =
+            """Username must be between $minUsernameSize and $maxUsernameSize characters"""
+        val passwordSizeInvalidMessage =
+            """Password must be between $minPasswordSize and $maxPasswordSize characters"""
+        val usernameContainsSpaceMessage = "The username is not valid"
+        val emailInvalidMessage = "The email is not valid"
+        val cpfInvalidMessage = "The CPF is not valid"
+
+        request.apply {
+
+            if (username.length < minUsernameSize || username.length > maxUsernameSize)
+                errors.add(RestItemError(usernameSizeInvalidMessage, "${errorCode}_001"))
+            if (username.isUsername())
+                errors.add(RestItemError(usernameContainsSpaceMessage, "${errorCode}_002"))
+            if (email.isEmail().not())
+                errors.add(RestItemError(emailInvalidMessage, "${errorCode}_003"))
+            if (password.length < minPasswordSize || password.length > maxPasswordSize)
+                errors.add(RestItemError(passwordSizeInvalidMessage, "${errorCode}_004"))
+            if (cpf.isCPF().not())
+                errors.add(RestItemError(cpfInvalidMessage, "${errorCode}_005"))
+        }
+
+        if (errors.isNotEmpty())
+            throw UserRegistrationException(
+                "The request is not valid", CONFLICT, errors
+            )
+    }
+
+
+    private fun validateUserInformation(user: User): Boolean {
 
         if (existsByUsername(user))
             throw RestException(
                 message = "Error: Username is Already taken!",
-                httpStatus =
-                CONFLICT,
+                httpStatus = CONFLICT,
             )
         if (userRepository.existsByEmail(user.email))
             throw RestException(message = "Error: Email is Already taken!", httpStatus = CONFLICT)

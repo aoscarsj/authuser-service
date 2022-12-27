@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*
 @CrossOrigin(origins = ["*"], maxAge = 3600)
 @RequestMapping("/auth")
 class AuthenticationRestV1(
-    val userService: UserService,
+    private val userService: UserService,
 ) {
 
     @PostMapping("/signup")
