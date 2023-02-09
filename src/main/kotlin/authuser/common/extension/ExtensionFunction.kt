@@ -10,7 +10,7 @@ private const val REGEX_EMAIL_VALIDATION =
             "[0-9]{1,2}|25[0-5]|2[0-4][0-9]))|" +
             "([a-zA-Z]+[\\w-]+\\.)+[a-zA-Z]{2,4})$"
 private const val REGEX_CPF_VALIDATION =
-    "/^\\d{3}\\.\\d{3}\\.\\d{3}\\-\\d{2}\$/"
+    "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}"
 
 fun String.maskEmail(): String =
     this.replace("(?<=.{3}).(?=.*@)".toRegex(), "*")

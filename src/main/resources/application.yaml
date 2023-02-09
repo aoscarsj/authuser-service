@@ -25,6 +25,7 @@ spring:
   output:
     ansi:
       enabled: always
+
 logging:
   level:
     authuser: TRACE

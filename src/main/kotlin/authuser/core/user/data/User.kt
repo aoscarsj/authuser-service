@@ -13,7 +13,7 @@ import javax.persistence.*
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
 @Table(name = "TB_USERS")
-class User(
+data class User(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     var userId: UUID? = null,
