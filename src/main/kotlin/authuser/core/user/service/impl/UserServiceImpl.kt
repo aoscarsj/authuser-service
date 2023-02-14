@@ -14,6 +14,8 @@ import authuser.core.user.exception.UserException
 import authuser.core.user.exception.UserRegistrationException
 import authuser.core.user.repository.UserRepository
 import authuser.core.user.service.UserService
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
@@ -28,52 +30,68 @@ class UserServiceImpl(
 ) : UserService {
 
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
+    private val logger: Logger by lazy { LogManager.getLogger(this.javaClass) }
 
     override fun findAll(searchRequest: UserSearchRequest, page: Pageable): Page<User> {
 
+        logger.info("Searching Records with the request #$searchRequest")
         searchRequest.apply {
 
-            if (email != null && status != null && type != null)
-                return userRepository.findAllByTypeAndStatusAndEmailContains(
-                    type, status, email, page
-                )
-            if (status != null && type != null)
-                return userRepository.findAllByTypeAndStatus(type, status, page)
-            if (status != null && email != null)
-                return userRepository.findAllByStatusAndEmailContains(status, email, page)
-            if (type != null && email != null)
-                return userRepository.findAllByTypeAndEmailContains(type, email, page)
-            if (status != null)
-                return userRepository.findAllByStatus(status, page)
-            if (type != null)
-                return userRepository.findAllByType(type, page)
-            if (email != null)
-                return userRepository.findAllByEmailContains(email, page)
-        }
+            val (hasEmail, hasStatus, hasType) = Triple(email != null, status != null, type != null)
+            val (hasStatusType, hasStatusEmail, hasTypeEmail) = Triple(
+                hasStatus && hasType, hasEmail && hasStatus, hasType && hasEmail
+            )
+            val isAllFilled = hasStatusType && hasEmail
 
-        return userRepository.findAll(page)
+            return when {
+
+                isAllFilled -> userRepository.findAllByTypeAndStatusAndEmailContains(
+                    type!!, status!!, email!!, page
+                )
+
+                hasStatusEmail -> userRepository.findAllByStatusAndEmailContains(
+                    status!!, email!!, page
+                )
+
+                hasStatusType -> userRepository.findAllByTypeAndStatus(type!!, status!!, page)
+                hasTypeEmail -> userRepository.findAllByTypeAndEmailContains(type!!, email!!, page)
+                hasStatus -> userRepository.findAllByStatus(status!!, page)
+                hasType -> userRepository.findAllByType(type!!, page)
+                hasEmail -> userRepository.findAllByEmailContains(email!!, page)
+
+                else -> userRepository.findAll(page)
+            }
+        }
     }
 
 
     override fun findById(userId: UUID): User {
 
+        logger.info("Searching user by userId: #$userId")
         return userRepository.findByIdOrNull(userId) ?: throw UserException(
             "User not found",
             NOT_FOUND
         )
     }
 
-    override fun delete(userId: UUID) = userRepository.delete(findById(userId))
+    override fun delete(userId: UUID) {
+
+        logger.warn("Deleting user by userId: #$userId")
+        return userRepository.delete(findById(userId))
+    }
 
     override fun existsByUsername(user: User): Boolean =
         userRepository.existsByUsername(user.username)
 
+
     override fun update(userId: UUID, updateRequest: UserUpdateRequest): User {
 
+        logger.info("Starting user update")
         validateRequest(updateRequest)
 
         val user = findById(userId)
 
+        logger.info("user to be changed: $user")
         updateRequest.apply {
 
             if (!email.isNullOrEmpty())
@@ -85,12 +103,14 @@ class UserServiceImpl(
             if (!cpf.isNullOrEmpty())
                 user.cpf = cpf
         }
-        userRepository.save(user)
 
-        return user
+        logger.info("Saving updated user: $user")
+        return userRepository.save(user)
     }
 
     private fun validateRequest(request: UserUpdateRequest) {
+
+        logger.info("Starting validate request")
 
         val errors: MutableList<RestItemError> = mutableListOf()
         val errorCode = "UPDATE_USER"
@@ -99,26 +119,37 @@ class UserServiceImpl(
 
             email?.let {
 
-                if (!email.isEmail())
+                if (!email.isEmail()) {
+                    logger.warn("Email: #$email is not valid")
                     errors.add(RestItemError("Email is not valid", code = "${errorCode}_E01"))
-                if (userRepository.existsByEmail(email))
+                }
+                if (userRepository.existsByEmail(email)) {
+                    logger.warn("Email: #$email already registered")
                     errors.add(RestItemError("email already registered", code = "${errorCode}_E02"))
+                }
             }
 
             cpf?.let {
-                if (!cpf.isCPF())
+                if (!cpf.isCPF()) {
+                    logger.warn("CPF: #$cpf is not valid")
                     errors.add(RestItemError("CPF is not valid", code = "${errorCode}_C01"))
-                if (userRepository.existsByCpf(cpf))
+                }
+                if (userRepository.existsByCpf(cpf)) {
+                    logger.warn("CPF: #$cpf already registered")
                     errors.add(RestItemError("cpf already registered", code = "${errorCode}_E02"))
+                }
             }
         }
 
-        if (errors.isNotEmpty())
+        if (errors.isNotEmpty()) {
+            logger.error("The request for CPF #${request.cpf} is not valid, errors: $errors")
             throw UserRegistrationException("The request is not valid", CONFLICT, errors)
+        }
     }
 
     override fun updatePassword(userId: UUID, updateRequest: UserUpdateRequest) {
 
+        logger.info("Starting password update for userId #$userId")
         val user = findById(userId)
         validatePassword(user, updateRequest)
 
@@ -128,13 +159,20 @@ class UserServiceImpl(
 
     private fun validatePassword(user: User, updateRequest: UserUpdateRequest) {
 
+        logger.info("Starting password validate for userId #${user.userId}")
         updateRequest.apply {
-            if (oldPassword.isNullOrEmpty() || password.isNullOrEmpty())
+            if (oldPassword.isNullOrEmpty() || password.isNullOrEmpty()) {
+                logger.error("Password for user #${user.userId} cannot be null or empty")
                 throw PasswordException("Password cannot be null or empty.", BAD_REQUEST)
-            if (password.length < 8 || password.length > 25)
+            }
+            if (password.length < 8 || password.length > 25) {
+                logger.error("Password for user #${user.userId} must be greater than 7 digits")
                 throw PasswordException("Password must be between 8 and 25 digits.", BAD_REQUEST)
-            if (passwordEncoder.matches(oldPassword, user.password).not())
+            }
+            if (passwordEncoder.matches(oldPassword, user.password).not()) {
+                logger.error("Incorrect password for user #${user.userId}")
                 throw PasswordException("Error: Mismatched old password.", CONFLICT)
+            }
         }
     }
 
@@ -154,6 +192,7 @@ class UserServiceImpl(
 
     override fun signup(request: UserCreateRequest): User {
 
+        logger.info("signup request started")
         validateSignupRequest(request)
         val user = User.from(request)
 
@@ -162,11 +201,13 @@ class UserServiceImpl(
         user.password = passwordEncoder.encode(user.password)
         userRepository.save(user)
 
+        logger.info("signup for userId: ${user.userId} completed successfully")
         return user
     }
 
     private fun validateSignupRequest(request: UserCreateRequest) {
 
+        logger.info("validate signup request started")
         val errors: MutableList<RestItemError> = mutableListOf()
         val errorCode = "REGISTRATION_USER"
         val (minUsernameSize, maxUsernameSize) = Pair(4, 30)
@@ -194,22 +235,30 @@ class UserServiceImpl(
                 errors.add(RestItemError(cpfInvalidMessage, "${errorCode}_005"))
         }
 
-        if (errors.isNotEmpty())
+        if (errors.isNotEmpty()) {
+
+            logger.error("Error validating user data, errors: $errors")
             throw UserRegistrationException(
                 "The request is not valid", CONFLICT, errors
             )
+        }
     }
 
 
     private fun validateUserInformation(user: User): Boolean {
 
-        if (existsByUsername(user))
+        logger.info("Starting validate user information for userId #${user.userId}")
+        if (existsByUsername(user)) {
+            logger.error("Username #${user.username} is already taken")
             throw RestException(
-                message = "Error: Username is Already taken!",
+                message = "Error: Username is already taken!",
                 httpStatus = CONFLICT,
             )
-        if (userRepository.existsByEmail(user.email))
+        }
+        if (userRepository.existsByEmail(user.email)) {
+            logger.error("Email #${user.email} is already taken")
             throw RestException(message = "Error: Email is Already taken!", httpStatus = CONFLICT)
+        }
 
         return true
     }
